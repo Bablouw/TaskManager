@@ -338,7 +338,7 @@ namespace TaskExchange.Services
                 LinkInstanceUniqueId = row.LinkUniqueId,
                 LinkName = row.LinkName,
                 RecipientModelId = _storage.CurrentModelId,
-                RecipientModelName = _document.Title,
+                RecipientModelName = ModelNameFormatter.ForDisplay(_document.Title),
                 LocalElementUniqueId = local?.UniqueId ?? string.Empty,
                 LocalElementId = local == null ? 0 : RevitId.Value(local.Id),
                 ConfigurationId = row.ConfigurationId,

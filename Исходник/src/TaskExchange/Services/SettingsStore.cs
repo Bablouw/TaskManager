@@ -22,6 +22,8 @@ namespace TaskExchange.Services
                     settings.Configurations = CreateDefault().Configurations;
                 if (settings.LinkConfigurationIds == null)
                     settings.LinkConfigurationIds = new System.Collections.Generic.Dictionary<string, string>();
+                if (settings.ModelConfigurationIds == null)
+                    settings.ModelConfigurationIds = new System.Collections.Generic.Dictionary<string, string>();
                 return settings;
             }
             catch (Exception ex)

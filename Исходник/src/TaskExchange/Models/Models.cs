@@ -49,6 +49,7 @@ namespace TaskExchange.Models
         public string TaskProjectParameterName { get; set; } = "Задание для ЭОМ";
         public List<ExchangeConfiguration> Configurations { get; set; } = new List<ExchangeConfiguration>();
         public Dictionary<string, string> LinkConfigurationIds { get; set; } = new Dictionary<string, string>();
+        public Dictionary<string, string> ModelConfigurationIds { get; set; } = new Dictionary<string, string>();
     }
 
     public sealed class ConfigurationPackage
@@ -108,6 +109,7 @@ namespace TaskExchange.Models
         public int LinkElementId { get; set; }
         public string LinkUniqueId { get; set; } = string.Empty;
         public string LinkName { get; set; } = string.Empty;
+        public string ModelKey { get; set; } = string.Empty;
         public bool IsLoaded { get; set; }
         public int Placed { get; set; }
         public int New { get; set; }

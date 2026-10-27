@@ -480,6 +480,7 @@ namespace TaskExchange.UI
         private static List<string> CollectProjectParameterNames(Document document)
         {
             var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            result.Add(LabelUtils.GetLabelFor(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS));
             DefinitionBindingMapIterator iterator = document.ParameterBindings.ForwardIterator();
             while (iterator.MoveNext())
                 if (iterator.Key != null) result.Add(iterator.Key.Name);

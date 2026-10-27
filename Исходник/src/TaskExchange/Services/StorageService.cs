@@ -77,7 +77,7 @@ namespace TaskExchange.Services
             ledger.History.Add(new HistoryEntry
             {
                 AssignmentKey = snapshot.Key,
-                Document = _document.Title,
+                Document = ModelNameFormatter.ForDisplay(_document.Title),
                 DateUtc = DateTime.UtcNow.ToString("O"),
                 User = _document.Application.Username,
                 Action = action,

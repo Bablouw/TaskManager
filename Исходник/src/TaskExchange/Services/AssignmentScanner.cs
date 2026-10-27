@@ -31,13 +31,15 @@ namespace TaskExchange.Services
             var summaries = new List<LinkSummary>();
             foreach (RevitLinkInstance link in links)
             {
-                ExchangeConfiguration configuration = ResolveConfiguration(link.UniqueId);
+                ExchangeConfiguration configuration = ResolveConfiguration(link);
+                string linkName = ModelNameFormatter.ForDisplay(link.Name);
                 List<AssignmentRow> rows = ScanAssignments(new[] { RevitId.Value(link.Id) }, configuration);
                 summaries.Add(new LinkSummary
                 {
                     LinkElementId = RevitId.Value(link.Id),
                     LinkUniqueId = link.UniqueId,
-                    LinkName = link.Name,
+                    LinkName = linkName,
+                    ModelKey = ModelNameFormatter.ConfigurationKey(linkName),
                     IsLoaded = link.GetLinkDocument() != null,
                     Placed = rows.Count(x => x.Status == AssignmentStatus.Received),
                     New = rows.Count(x => x.Status == AssignmentStatus.New),
@@ -65,7 +67,7 @@ namespace TaskExchange.Services
             {
                 Document linkedDocument = link.GetLinkDocument();
                 if (linkedDocument == null) continue;
-                ExchangeConfiguration configuration = ResolveConfiguration(link.UniqueId) ?? fallbackConfiguration;
+                ExchangeConfiguration configuration = ResolveConfiguration(link) ?? fallbackConfiguration;
                 Transform transform = link.GetTotalTransform();
                 string sourceModelId = linkedDocument.ProjectInformation?.UniqueId ?? linkedDocument.Title;
 
@@ -94,10 +96,10 @@ namespace TaskExchange.Services
                         Key = key,
                         LinkElementId = RevitId.Value(link.Id),
                         LinkUniqueId = link.UniqueId,
-                        LinkName = link.Name,
+                        LinkName = ModelNameFormatter.ForDisplay(link.Name),
                         SourceModelId = sourceModelId,
                         IsFromCurrentModel = linkedTask != null && string.Equals(linkedTask.SourceModelId, _storage.CurrentModelId, StringComparison.Ordinal),
-                        SourceModelName = linkedDocument.Title,
+                        SourceModelName = ModelNameFormatter.ForDisplay(linkedDocument.Title),
                         SourceElementId = RevitId.Value(source.Id),
                         SourceElementUniqueId = source.UniqueId,
                         LocalElementId = localElement == null ? 0 : RevitId.Value(localElement.Id),
@@ -129,9 +131,9 @@ namespace TaskExchange.Services
                     Key = old.Key,
                     LinkElementId = FindLinkId(old.LinkInstanceUniqueId),
                     LinkUniqueId = old.LinkInstanceUniqueId,
-                    LinkName = old.LinkName,
+                    LinkName = ModelNameFormatter.ForDisplay(old.LinkName),
                     SourceModelId = old.SourceModelId,
-                    SourceModelName = old.SourceModelName,
+                    SourceModelName = ModelNameFormatter.ForDisplay(old.SourceModelName),
                     SourceElementId = old.SourceElementId,
                     SourceElementUniqueId = old.SourceElementUniqueId,
                     LocalElementId = local == null ? old.LocalElementId : RevitId.Value(local.Id),
@@ -168,13 +170,23 @@ namespace TaskExchange.Services
                   || string.Equals(parameter.AsString(), "1", StringComparison.OrdinalIgnoreCase);
         }
 
-        private ExchangeConfiguration ResolveConfiguration(string linkUniqueId)
+        private ExchangeConfiguration ResolveConfiguration(RevitLinkInstance link)
         {
             string id;
-            if (_settings.LinkConfigurationIds.TryGetValue(linkUniqueId, out id))
+            string modelKey = ModelNameFormatter.ConfigurationKey(link.Name);
+            if (_settings.ModelConfigurationIds.TryGetValue(modelKey, out id))
             {
                 ExchangeConfiguration found = _settings.Configurations.FirstOrDefault(x => x.Id == id);
                 if (found != null) return found;
+            }
+            if (_settings.LinkConfigurationIds.TryGetValue(link.UniqueId, out id))
+            {
+                ExchangeConfiguration found = _settings.Configurations.FirstOrDefault(x => x.Id == id);
+                if (found != null)
+                {
+                    _settings.ModelConfigurationIds[modelKey] = found.Id;
+                    return found;
+                }
             }
             return _settings.Configurations.FirstOrDefault();
         }

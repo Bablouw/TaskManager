@@ -25,6 +25,7 @@ namespace TaskExchange.UI
         private TasksWindow _tasksWindow;
         private SettingsWindow _settingsWindow;
         private bool _closing;
+        private bool _syncingConfigurations;
 
         internal ManagerWindow(UIApplication application, TaskManagerSession session, string familyName)
         {
@@ -90,7 +91,11 @@ namespace TaskExchange.UI
             AddColumns();
             root.Children.Add(UiTheme.Card(_grid, new Thickness(0)));
             LoadLinks();
-            Closing += (s, e) => _closing = true;
+            Closing += (s, e) =>
+            {
+                SaveLinkConfigurations();
+                _closing = true;
+            };
             Closed += (s, e) =>
             {
                 _tasksWindow?.Close();
@@ -134,6 +139,8 @@ namespace TaskExchange.UI
                     : new HashSet<string>(selectedLinkIds, StringComparer.Ordinal);
                 var scanner = new AssignmentScanner(_application.ActiveUIDocument.Document, _settings);
                 _links = new ObservableCollection<LinkSummary>(scanner.ScanLinks());
+                foreach (LinkSummary link in _links)
+                    link.PropertyChanged += LinkConfigurationChanged;
                 _grid.ItemsSource = _links;
                 DataGridComboBoxColumn combo = _grid.Columns.OfType<DataGridComboBoxColumn>().First();
                 combo.ItemsSource = _settings.Configurations;
@@ -158,9 +165,32 @@ namespace TaskExchange.UI
             foreach (LinkSummary link in _links ?? Enumerable.Empty<LinkSummary>())
             {
                 if (link.Configuration != null)
+                {
                     _settings.LinkConfigurationIds[link.LinkUniqueId] = link.Configuration.Id;
+                    _settings.ModelConfigurationIds[link.ModelKey] = link.Configuration.Id;
+                }
             }
             _store.Save(_settings);
+        }
+
+        private void LinkConfigurationChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (_syncingConfigurations || e.PropertyName != nameof(LinkSummary.Configuration)) return;
+            if (!(sender is LinkSummary changed) || changed.Configuration == null) return;
+
+            try
+            {
+                _syncingConfigurations = true;
+                foreach (LinkSummary link in _links.Where(link =>
+                    !ReferenceEquals(link, changed) &&
+                    string.Equals(link.ModelKey, changed.ModelKey, StringComparison.Ordinal)))
+                    link.Configuration = changed.Configuration;
+                SaveLinkConfigurations();
+            }
+            finally
+            {
+                _syncingConfigurations = false;
+            }
         }
 
         private void OpenTasks(object sender, RoutedEventArgs e)
