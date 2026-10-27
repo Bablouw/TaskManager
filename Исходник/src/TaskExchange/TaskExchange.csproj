@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyName>TaskExchange</AssemblyName>
+    <RootNamespace>TaskExchange</RootNamespace>
+    <RevitVersion Condition="'$(RevitVersion)' == ''">2024</RevitVersion>
+    <RevitInstallDir>C:\Program Files\Autodesk\Revit $(RevitVersion)</RevitInstallDir>
+    <OutputPath>..\..\artifacts\Revit$(RevitVersion)\TaskExchange\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <DebugType>portable</DebugType>
+    <DefineConstants>$(DefineConstants);REVIT$(RevitVersion)</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="RevitAPI">
+      <HintPath>$(RevitInstallDir)\RevitAPI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="RevitAPIUI">
+      <HintPath>$(RevitInstallDir)\RevitAPIUI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\resources\UNI_Задание.rfa" Link="UNI_Задание.rfa" CopyToOutputDirectory="PreserveNewest" />
+    <EmbeddedResource Include="..\..\resources\TaskManager16.png" LogicalName="TaskExchange.Resources.TaskManager16.png" />
+    <EmbeddedResource Include="..\..\resources\TaskManager32.png" LogicalName="TaskExchange.Resources.TaskManager32.png" />
+  </ItemGroup>
+</Project>

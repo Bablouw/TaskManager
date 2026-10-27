@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>Обмен заданиями</Name>
+    <Assembly>TaskExchange\TaskExchange.dll</Assembly>
+    <AddInId>A75D7118-E799-4EAF-8EEA-02E8D4828A42</AddInId>
+    <FullClassName>TaskExchange.App</FullClassName>
+    <VendorId>UNI</VendorId>
+    <VendorDescription>Обмен заданиями между связанными моделями</VendorDescription>
+  </AddIn>
+</RevitAddIns>

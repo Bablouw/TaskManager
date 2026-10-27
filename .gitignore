@@ -1,0 +1,11 @@
+/.dotnet-cli/
+/artifacts/
+/tmp/
+/install.ps1
+/UNI_Задание.rfa
+/Исходник/.dotnet-cli/
+/Исходник/artifacts/
+**/obj/
+**/bin/
+*.user
+*.suo
