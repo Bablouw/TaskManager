@@ -57,7 +57,7 @@ namespace TaskExchange.Services
         {
             if (_closed) return;
             _closed = true;
-            if (Window.IsVisible) Window.Close();
+            if (Window.IsLoaded) Window.Close();
             if (Document.IsValidObject)
                 _dispatcher.PostThenDispose(MovePreviewService.Clear);
             else

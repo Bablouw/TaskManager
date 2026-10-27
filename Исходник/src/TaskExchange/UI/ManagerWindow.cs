@@ -24,6 +24,7 @@ namespace TaskExchange.UI
         private readonly TextBlock _status;
         private TasksWindow _tasksWindow;
         private SettingsWindow _settingsWindow;
+        private bool _closing;
 
         internal ManagerWindow(UIApplication application, TaskManagerSession session, string familyName)
         {
@@ -89,6 +90,7 @@ namespace TaskExchange.UI
             AddColumns();
             root.Children.Add(UiTheme.Card(_grid, new Thickness(0)));
             LoadLinks();
+            Closing += (s, e) => _closing = true;
             Closed += (s, e) =>
             {
                 _tasksWindow?.Close();
@@ -123,10 +125,13 @@ namespace TaskExchange.UI
             IsReadOnly = true
         };
 
-        private void LoadLinks()
+        private void LoadLinks(IEnumerable<string> selectedLinkIds = null)
         {
             try
             {
+                var selectedIds = selectedLinkIds == null
+                    ? null
+                    : new HashSet<string>(selectedLinkIds, StringComparer.Ordinal);
                 var scanner = new AssignmentScanner(_application.ActiveUIDocument.Document, _settings);
                 _links = new ObservableCollection<LinkSummary>(scanner.ScanLinks());
                 _grid.ItemsSource = _links;
@@ -135,6 +140,11 @@ namespace TaskExchange.UI
                 _status.Text = _links.Count == 0
                     ? "В проекте нет загруженных связей."
                     : $"Связей: {_links.Count}. Выберите одну или несколько строк (Ctrl/Shift).";
+                if (selectedIds != null)
+                {
+                    foreach (LinkSummary link in _links.Where(link => selectedIds.Contains(link.LinkUniqueId)))
+                        _grid.SelectedItems.Add(link);
+                }
             }
             catch (Exception ex)
             {
@@ -169,20 +179,26 @@ namespace TaskExchange.UI
                     _tasksWindow.Activate();
                     return;
                 }
-                var window = new TasksWindow(application, _session, _settings, selected) { Owner = this };
+                var selectedIds = new HashSet<string>(selected.Select(link => link.LinkUniqueId), StringComparer.Ordinal);
+                var window = new TasksWindow(application, _session, _settings, selected);
+                UiHelpers.SetRevitOwner(window, application);
                 _tasksWindow = window;
                 window.Closed += (s, args) =>
                 {
                     _tasksWindow = null;
-                    _session.Post(app => LoadLinks());
+                    RestoreManager();
+                    _session.Post(app => LoadLinks(selectedIds));
                 };
-                window.Show();
+                ShowChild(window);
             });
         }
 
         private void OpenSettings(object sender, RoutedEventArgs e)
         {
             SaveLinkConfigurations();
+            var selectedIds = new HashSet<string>(
+                _grid.SelectedItems.Cast<LinkSummary>().Select(link => link.LinkUniqueId),
+                StringComparer.Ordinal);
             _session.Post(application =>
             {
                 if (_settingsWindow != null)
@@ -190,18 +206,43 @@ namespace TaskExchange.UI
                     _settingsWindow.Activate();
                     return;
                 }
-                var window = new SettingsWindow(application, _settings) { Owner = this };
+                var window = new SettingsWindow(application, _settings);
+                UiHelpers.SetRevitOwner(window, application);
                 _settingsWindow = window;
                 window.Closed += (s, args) =>
                 {
                     _settingsWindow = null;
-                    if (!window.Saved) return;
-                    _tasksWindow?.Close();
-                    _settings = _store.Load();
-                    _session.Post(app => LoadLinks());
+                    RestoreManager();
+                    if (window.Saved)
+                    {
+                        _settings = _store.Load();
+                        _session.Post(app => LoadLinks(selectedIds));
+                    }
                 };
-                window.Show();
+                ShowChild(window);
             });
+        }
+
+        private void ShowChild(Window window)
+        {
+            try
+            {
+                Hide();
+                window.Show();
+            }
+            catch
+            {
+                if (!_closing && !_session.IsClosed)
+                    Show();
+                throw;
+            }
+        }
+
+        private void RestoreManager()
+        {
+            if (_closing || _session.IsClosed) return;
+            Show();
+            Activate();
         }
 
         private void Refresh(object sender, RoutedEventArgs e)
