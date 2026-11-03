@@ -4,7 +4,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$packageRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$packageRoot = if ([string]::IsNullOrWhiteSpace($env:TASKEXCHANGE_PACKAGE_ROOT)) {
+    Split-Path -Parent $MyInvocation.MyCommand.Path
+} else {
+    [System.IO.Path]::GetFullPath($env:TASKEXCHANGE_PACKAGE_ROOT).TrimEnd('\')
+}
 if ($packageRoot.StartsWith('\\')) {
     throw 'Запустите установщик из локальной папки, а не с сетевого диска.'
 }
