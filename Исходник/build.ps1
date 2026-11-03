@@ -48,9 +48,4 @@ foreach ($version in $versions) {
     Copy-Item -LiteralPath (Join-Path $root 'package-install.ps1') -Destination (Join-Path $package 'install.ps1') -Force
 }
 
-foreach ($version in $versions) {
-    $archive = Join-Path $dist "TaskExchange-Revit$version.zip"
-    Compress-Archive -Path (Join-Path $dist "Revit$version\*") -DestinationPath $archive -Force
-}
-
 Write-Host "Готово: $dist"
